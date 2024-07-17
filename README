@@ -12,3 +12,4 @@ A simple DNS resolver server, resolves DNS queries based on local mappings and a
 
 - dig @localhost -p 5333 google.com
 - dig @localhost -p 5333 one.test.
+- dig @localhost -p 5333 two.test.
