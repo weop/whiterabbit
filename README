@@ -1,15 +1,99 @@
-# Restrictive DNS Resolver
+# WhiteRabbit DNS Server
 
-A simple DNS resolver server, resolves DNS queries based on local mappings and an optional whitelist for external queries.
+A restrictive DNS resolver server that resolves DNS queries based on local mappings and an optional whitelist for external queries. Features in-memory caching, BadgerDB persistence, and auto-whitelisting capabilities.
 
 ## Features
 
-- Resolves DNS queries based on `dns_records.txt`.
-- Queries external DNS for domains only in in `whitelist.txt`.
-- Supports UDP protocol.
+- **Local DNS Records**: Resolves DNS queries based on `dns_records.txt`
+- **Whitelist Control**: Queries external DNS only for domains in `whitelist.txt`
+- **Auto-Whitelisting**: Optional mode to automatically add requested domains to whitelist
+- **Persistent Storage**: Uses BadgerDB for storing DNS records and whitelist entries
+- **In-Memory Caching**: 5-minute cache for improved performance
+- **External DNS Integration**: Uses Google DNS-over-HTTPS for external queries
+- **UDP Protocol Support**: Standard DNS protocol compatibility
 
-## Usage
+## Installation
 
-- dig @localhost -p 5333 google.com
-- dig @localhost -p 5333 one.test.
-- dig @localhost -p 5333 two.test.
+```bash
+# Clone the repository
+git clone <repository-url>
+cd whiterabbit
+
+# Install dependencies
+go mod tidy
+
+# Build the application
+go build -o whiterabbit main.go
+```
+
+## Basic Usage
+
+### Start the DNS Server
+
+```bash
+# Start in normal mode (default port 5333)
+./whiterabbit --listen
+
+# Start with custom port
+./whiterabbit --listen --port :8053
+
+# Start with auto-whitelist mode (automatically adds requested domains to whitelist)
+./whiterabbit --listen --whitelist
+```
+
+### Remove DNS Records
+
+```bash
+# Remove a specific DNS record
+./whiterabbit --rm example.com
+```
+
+### Test DNS Queries
+
+```bash
+# Query local DNS records
+dig @localhost -p 5333 one.test.
+dig @localhost -p 5333 two.test.
+
+# Query whitelisted external domains
+dig @localhost -p 5333 google.com
+dig @localhost -p 5333 github.com
+```
+
+## Configuration Files
+
+### dns_records.txt
+Local DNS mappings in the format:
+```
+domain.example.com 192.168.1.100
+test.local 127.0.0.1
+```
+
+### whitelist.txt
+Domains allowed for external DNS queries:
+```
+google.com
+github.com
+stackoverflow.com
+```
+
+## Command Line Options
+
+- `--listen`: Start the DNS server in listen mode
+- `--whitelist`: Enable auto-adding DNS entries for whitelisted domains
+- `--rm <domain>`: Remove DNS record for specified domain
+- `--port <port>`: Port to listen on (default: :5333)
+- `--reset`: Clears cache and datbases
+
+## How It Works
+
+1. **Local Resolution**: First checks local DNS records from `dns_records.txt`
+2. **Whitelist Check**: If not found locally, checks if domain is in `whitelist.txt`
+3. **External Query**: If whitelisted, queries them using DoH
+4. **Caching**: Results are cached in memory for 5 minutes
+5. **Persistence**: In whitelist mode, successful external queries are stored in BadgerDB
+
+## Dependencies
+
+- [BadgerDB v3](https://github.com/dgraph-io/badger) - Embedded key-value database
+- [DNS Library](https://github.com/miekg/dns) - DNS protocol implementation
